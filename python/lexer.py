@@ -55,7 +55,7 @@ def Lex(code:str):
             token = Token(special_chars[char],position)
             char = next(iterChar)
             position.position_on_line = position.position_on_line + 1
-        elif(char == '\n'): 
+        elif(char == '\n'):
             token = Token(TokenType.EOL,position)
             position.line_number = position.line_number + 1
             position.position_on_line = 0
@@ -66,7 +66,11 @@ def Lex(code:str):
             char = next(iterChar)
             while(char.isdigit()):
                 number = number + char
-                char = next(iterChar)
+                # The end of an iterator causes an exception to be thrown.
+                try:
+                    char = next(iterChar)
+                except:
+                    break
             token = NumberToken(int(number),position)
             position.position_on_line = position.position_on_line + len(str(number))
         elif(isStartOfWord(char)):
@@ -75,7 +79,11 @@ def Lex(code:str):
             char = next(iterChar)
             while(char.isalnum()):
                 word = word + char
-                char = next(iterChar)
+                # The end of an iterator causes an exception to be thrown.
+                try:
+                    char = next(iterChar)
+                except:
+                    break
             # check if this is a reserved word
             potential_token_type = getReservedKeywordToken(word)
             if ( potential_token_type==None):
@@ -84,8 +92,9 @@ def Lex(code:str):
                 token = Token(potential_token_type,position)
             position.position_on_line = position.position_on_line + len(word)
         else:
-            # as no token was accepted the lexer is now stuk on this symbol and can't advance
-            raise Exception("invalid symbol -->"+char+"<--detected")
+            # This is an invalid token, return invalid token and continue
+            token = InvalidToken(char,position)
+            position.position_on_line = position.position_on_line + 1
         yield token
 
 def main(args):

@@ -23,6 +23,7 @@ class TokenType(Enum):
     SINGLE_QUOTE = auto()
     POINT = auto()
     COMMA = auto()
+    INVALID = auto()
 
 class Position:
     def __init__(self,file_name:str,line_number:int,position_on_line:int):
@@ -44,3 +45,9 @@ class NumberToken(Token):
     def __init__(self,number: int,position:Position):
         super().__init__(TokenType.NUMBER,position)
         self.number = number
+        self.token_type = TokenType.NUMBER
+
+class InvalidToken(Token):
+    def __init__(self,invalid_char,position:Position):
+        super().__init__(TokenType.INVALID,position)
+        self.invalidChar = invalid_char
