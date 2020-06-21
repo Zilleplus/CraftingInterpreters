@@ -3,16 +3,17 @@ from lexer import Lex
 from tokenPrinter import TokenPrinter
 from itertools import *
 from ASTPrinter import ASTPrinter
+from sys import *
 
 def printTokens(tokens):
     for t in tokens:
         print(TokenPrinter.toString(t))
 
-"""
-Define operator priority here,
-Higher number means higher priority
-"""
 def operatorPriority(toke_type:TokenType) -> int:
+    """
+    Define operator priority here,
+    Higher number means higher priority
+    """
     priors = {
         TokenType.SMALLER_THEN : 0,
         TokenType.GREATER_THEN : 0,
@@ -26,24 +27,24 @@ def operatorPriority(toke_type:TokenType) -> int:
         return priors[token_type]
     return 0
 
-class ASTExpressionParser:
+class ASTExprParser:
     def parseUniExpr(token):
         """
         convert number/var into ast
 
-        input : 
+        input :
             - token
         returns ast
         """
         if(token.token_type==TokenType.NUMBER):
             return Number(token.number)
         else:
-            raise Exception("expected unitary token, but got something else")
+            raise Exception("expected unitary token, but got "+str(token.token_type)+" else")
 
     def parseBinExpr(leftExpr,operatorToken,rightExpr):
         """
         convert op token into ast
-        
+
         input:
             - leftExpr : ast
             - operatorToken : token
@@ -53,24 +54,8 @@ class ASTExpressionParser:
         try:
             binOperatorType = TokenToOperator.binary_operator[operatorToken.token_type]
             return BinaryOperator(binOperatorType,leftExpr,rightExpr)
-        except:
-            raise Exception("expected binary operator, but got something else")
-
-
-    def parseExpression(tokens):
-        """
-        input:
-            - tokens: iterator of tokens -> should not contain error tokens at this point
-        returns ast
-        """
-        firstToken = next(tokens)
-        expr = ASTExpressionParser.parseUniExpr(firstToken)
-        try: 
-            secondToken = next(tokens)
-            thirdToken = next(tokens)
-            return parseRec(expr,secondToken,thirdToken,tokens)
-        except:
-            return expr
+        except StopIteration:
+            raise Exception("expected binary operator, but got "+str(operatorToken.token_type)+" else")
 
     def parseRec(left,operator,right,tokens):
         """
@@ -88,19 +73,39 @@ class ASTExpressionParser:
             try:
                 nextRightToken = next(tokens)
 
+                # higher priority should be execute first
                 if(operatorPriority(nextOperator)>operatorPriority(operator)):
-                    priorityRight = parseRec(parseUniExpr(rightToken),nextOperator,next(tokens),tokens)
-                    return parseBinExpr(left,operator,priorityRight)
+                    newLeft = ASTExprParser.parseUniExpr(rightToken)
+                    priorityRight = ASTExprParser.parseRec(newLeft,nextOperator, next(tokens),tokens)
+                    return ASTExprParser.parseBinExpr(left,operator,priorityRight)
                 else:
-                    newLeft = parseBinExpr(left,operator,right)
-                    return parseRec(newLeft,nextOperator,nextRight,tokens)
+                    newLeft = ASTExprParser.parseBinExpr(left,operator,right)
+                    nextRight = ASTExprParser.parseUniExpr(nextRightToken)
+                    return ASTExprParser.parseRec(newLeft,nextOperator,nextRight,tokens)
 
-            except: # no next right token available
-                nextRightToken = nextOperator # this must be uni, as it's the final token
-                return parseBinExpr(left,operator,parseUniExpr(nextRightToken)) # end of the recursion
-        except:
-            # doe not take into account invalid expr such as "3 + 3 -"
-            return left # apparently there is nothing left to do
+            except StopIteration: # no next right token available, but we did get an operator
+                raise Exception("unexpected ending of expression: " + str(nextOperator.token_type))
+        except StopIteration:
+            # apparently there is nothing left to do
+            # does not take into account invalid expr such as "3 + 3 -"
+            leftExpr = ASTExprParser.parseUniExpr(left)
+            rightExpr = ASTExprParser.parseUniExpr(right)
+            return ASTExprParser.parseBinExpr(leftExpr, operator, rightExpr)
+
+    def parseExpression(tokens):
+        """
+        input:
+            - tokens: iterator of tokens -> should not contain error tokens at this point
+        returns ast
+        """
+        firstToken = next(tokens)
+        expr = ASTExprParser.parseUniExpr(firstToken)
+        try:
+            secondToken = next(tokens)
+            thirdToken = next(tokens)
+            return ASTExprParser.parseRec(expr,secondToken,thirdToken,tokens)
+        except StopIteration:
+            return expr
 
 def main(args):
     file_name = args[1]
@@ -119,11 +124,11 @@ def testExpression():
     unfilteredTokens = Lex(expr)
 
     # remove the spaces as they have no meaning atm
-    tokens = list(filter(lambda x: x.token_type != TokenType.SPACE, unfilteredTokens)) 
+    tokens = list(filter(lambda x: x.token_type != TokenType.SPACE, unfilteredTokens))
     printTokens(tokens)
 
-    print("pasrsing tokens into expr: \n")
-    parsedExpression = ASTExpressionParser.parseExpression(iter(tokens))
+    print("parsing tokens into expr: \n")
+    parsedExpression = ASTExprParser.parseExpression(iter(tokens))
     ASTPrinter.print(parsedExpression)
 
 if __name__ == "__main__":

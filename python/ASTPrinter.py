@@ -11,11 +11,11 @@ class ASTPrinter:
     }
 
     NodeName = {
-        NUMBER : "number",
-        UNITARY_OPERATOR : "untary operator",
-        BINARY_OPERATOR : "binary operator",
-        FUNCTION_CALL : "function call",
-        FUNCTION_DEFINITION : "function definition"
+        NodeType.NUMBER : "number",
+        NodeType.UNITARY_OPERATOR : "untary operator",
+        NodeType.BINARY_OPERATOR : "binary operator",
+        NodeType.FUNCTION_CALL : "function call",
+        NodeType.FUNCTION_DEFINITION : "function definition"
     }
 
     def getDetailsNode(node):
@@ -33,11 +33,17 @@ class ASTPrinter:
         expr = expr + rightSExpr + " "  
         return expr
 
-    def astToString(ast):
+    def astToString(node):
+        """ 
+        input:
+            ast node
+        return string representing ast from this node on
+        """ 
+
         if(node.node_type == NodeType.BINARY_OPERATOR):
             return createBinExpression(node.operator_type,\
-                astToString(node.left_expression),\
-                astToString(node.right_expression)
+                ASTPrinter.astToString(node.left_expression),\
+                ASTPrinter.astToString(node.right_expression))
 
         if(node.node_type==NodeType.NUMBER):
             return str(node.number)
@@ -51,5 +57,5 @@ class ASTPrinter:
         input: 
             ast
         """
-        print(astToString(ast))
+        print(ASTPrinter.astToString(ast))
 
