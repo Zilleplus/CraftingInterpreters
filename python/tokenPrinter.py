@@ -21,7 +21,9 @@ class TokenPrinter:
         TokenType.EOL : "EOL",
         TokenType.SINGLE_QUOTE : "SINGLE_QUOTE",
         TokenType.POINT : "POINT",
-        TokenType.COMMA : "COMMA"
+        TokenType.COMMA : "COMMA",
+        TokenType.INVALID : "INVALID",
+        TokenType.ASTERIX : "ASTERIX"
         }
 
     def toStringPosition(position:Position):
@@ -36,6 +38,8 @@ class TokenPrinter:
             result = result + " word="+token.word
         if(token.token_type==TokenType.NUMBER):
             result = result + " number="+str(token.number)
+        if(token.token_type==TokenType.INVALID):
+            result = result + " invalid char="+str(token.invalid_char)
         return result
 
 

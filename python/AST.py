@@ -2,7 +2,7 @@ from enum import Enum,auto
 from tokens import TokenType
 
 class NodeType(Enum):
-    CONSTANT = auto()
+    NUMBER = auto()
     UNITARY_OPERATOR = auto()
     BINARY_OPERATOR = auto()
     FUNCTION_CALL = auto()
@@ -30,6 +30,7 @@ class BinaryOperatorType(Enum):
         EQUALS = auto()
         MINUS = auto()
         PLUS = auto()
+        ASTERIX = auto()
     
 class TokenToOperator:
     binary_operator ={
@@ -37,12 +38,6 @@ class TokenToOperator:
         TokenType.GREATER_THEN : BinaryOperatorType.GREATER_THEN,
         TokenType.EQUALS : BinaryOperatorType.EQUALS,
         TokenType.MINUS : BinaryOperatorType.MINUS,
-        TokenType.PLUS : BinaryOperatorType.PLUS
+        TokenType.PLUS : BinaryOperatorType.PLUS,
+        TokenType.ASTERIX : BinaryOperatorType.ASTERIX
     }
-
-class ASTPrinter:
-    """
-    Prints out the ast in S-expressions
-    """
-    def print(ast):
-        ...
