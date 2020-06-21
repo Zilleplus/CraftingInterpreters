@@ -53,37 +53,49 @@ def Lex(code:str):
         token = None
         if(char in special_chars):
             token = Token(special_chars[char],position)
-            char = next(iterChar)
+            try:
+                char = next(iterChar)
+            except StopIteration:
+                empty=True
             position.position_on_line = position.position_on_line + 1
         elif(char == '\n'):
             token = Token(TokenType.EOL,position)
             position.line_number = position.line_number + 1
             position.position_on_line = 0
-            char = next(iterChar)
+            try:
+                char = next(iterChar)
+            except StopIteration:
+                empty=True
         elif(char.isdigit()):
             # this dude starts with a digit, so must be a number, as we don't support floats
             number = char
-            char = next(iterChar)
-            while(char.isdigit()):
+            try:
+                char = next(iterChar)
+            except StopIteration:
+                empty=True
+            while(char.isdigit()and (not empty)):
                 number = number + char
                 # The end of an iterator causes an exception to be thrown.
                 try:
                     char = next(iterChar)
-                except:
-                    break
+                except StopIteration:
+                    empty=True
             token = NumberToken(int(number),position)
             position.position_on_line = position.position_on_line + len(str(number))
         elif(isStartOfWord(char)):
             # this dude start with a l
             word = char
-            char = next(iterChar)
-            while(char.isalnum()):
+            try:
+                char = next(iterChar)
+            except StopIteration:
+                empty=True
+            while(char.isalnum() and (not empty)):
                 word = word + char
                 # The end of an iterator causes an exception to be thrown.
                 try:
                     char = next(iterChar)
-                except:
-                    break
+                except StopIteration:
+                    empty=True
             # check if this is a reserved word
             potential_token_type = getReservedKeywordToken(word)
             if ( potential_token_type==None):
@@ -95,6 +107,11 @@ def Lex(code:str):
             # This is an invalid token, return invalid token and continue
             token = InvalidToken(char,position)
             position.position_on_line = position.position_on_line + 1
+            try:
+                char = next(iterChar)
+            except StopIteration:
+                empty=True
+
         yield token
 
 def main(args):
