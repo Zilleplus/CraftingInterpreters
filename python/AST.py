@@ -25,12 +25,12 @@ class BinaryOperator(Node):
         self.right_expression=right_expression
 
 class BinaryOperatorType(Enum):
-        SMALLER_THEN = auto()
-        GREATER_THEN = auto()
-        EQUALS = auto()
-        MINUS = auto()
-        PLUS = auto()
-        ASTERIX = auto()
+    SMALLER_THEN = auto()
+    GREATER_THEN = auto()
+    EQUALS = auto()
+    MINUS = auto()
+    PLUS = auto()
+    ASTERIX = auto()
     
 class TokenToOperator:
     binary_operator ={

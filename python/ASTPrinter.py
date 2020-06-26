@@ -26,12 +26,12 @@ class ASTPrinter:
         """
         ...
 
-    def createBinExpression(node_type,leftSExpr,rightSExpr):
-        expr = ""
+    def createBinExpression(operator_type,leftSExpr,rightSExpr):
+        expr = "("
         expr = expr + leftSExpr + " "
-        expr = expr + ASTPrinter.BinaryOperatorName[node.node_type] + " "
+        expr = expr + ASTPrinter.BinaryOperatorName[operator_type] + " "
         expr = expr + rightSExpr + " "  
-        return expr
+        return expr + ")"
 
     def astToString(node):
         """ 
@@ -41,7 +41,7 @@ class ASTPrinter:
         """ 
 
         if(node.node_type == NodeType.BINARY_OPERATOR):
-            return createBinExpression(node.operator_type,\
+            return ASTPrinter.createBinExpression(node.operator_type,\
                 ASTPrinter.astToString(node.left_expression),\
                 ASTPrinter.astToString(node.right_expression))
 

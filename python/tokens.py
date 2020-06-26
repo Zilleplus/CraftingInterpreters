@@ -32,8 +32,8 @@ class Position:
         self.position_on_line=position_on_line
 
 class Token:
-    def __init__(self,toke_type:TokenType,position: Position):
-        self.token_type=toke_type
+    def __init__(self,token_type:TokenType,position: Position):
+        self.token_type=token_type
         self.position=deepcopy(position)
 
 class WordToken(Token):
@@ -45,7 +45,6 @@ class NumberToken(Token):
     def __init__(self,number: int,position:Position):
         super().__init__(TokenType.NUMBER,position)
         self.number = number
-        self.token_type = TokenType.NUMBER
 
 class InvalidToken(Token):
     def __init__(self,invalid_char,position:Position):
