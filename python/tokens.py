@@ -24,6 +24,7 @@ class TokenType(Enum):
     POINT = auto()
     COMMA = auto()
     INVALID = auto()
+    WEDGE = auto()
 
 class Position:
     def __init__(self,file_name:str,line_number:int,position_on_line:int):

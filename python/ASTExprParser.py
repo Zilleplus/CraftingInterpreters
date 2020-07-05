@@ -67,19 +67,21 @@ class ASTExprParser:
             - rightToken : token
             - tokens : iterator of tokens
         """
+        rightExpr = ASTExprParser.parseUniExpr(rightToken)
+
         try:
             nextOperatorToken = next(tokens)
 
             try:
                 nextRightToken = next(tokens)
 
-                if(operatorPriority(nextOperatorToken.token_type)>operatorPriority(operatorToken.token_type)):
-                    newLeft = ASTExprParser.parseUniExpr(rightToken)
-                    priorityRight = ASTExprParser.parseRec(newLeft,nextOperatorToken,nextRightToken ,tokens)
+                nextOperatorFirst = operatorPriority(nextOperatorToken.token_type)\
+                    >operatorPriority(operatorToken.token_type)
+                if(nextOperatorFirst):
+                    priorityRight = ASTExprParser.parseRec(rightExpr,nextOperatorToken,nextRightToken ,tokens)
                     return ASTExprParser.parseBinExpr(leftExpr,operatorToken,priorityRight)
                 else:
-                    newRight = ASTExprParser.parseUniExpr(rightToken)
-                    newLeft = ASTExprParser.parseBinExpr(leftExpr,operatorToken,newRight)
+                    newLeft = ASTExprParser.parseBinExpr(leftExpr,operatorToken,rightExpr)
                     return ASTExprParser.parseRec(newLeft,nextOperatorToken,nextRightToken,tokens)
 
             except StopIteration: # no next right token available, but we did get an operator
@@ -87,7 +89,6 @@ class ASTExprParser:
         except StopIteration:
             # apparently there is nothing left to do
             # does not take into account invalid expr such as "3 + 3 -"
-            # leftExpr = left
             rightExpr = ASTExprParser.parseUniExpr(rightToken)
             return ASTExprParser.parseBinExpr(leftExpr, operatorToken, rightExpr)
 
@@ -107,7 +108,7 @@ class ASTExprParser:
             return expr
 
 def main(args):
-    expr = "5 + 10 * 2"
+    expr = "5 + 3 * 2"
 
     unfilteredTokens = Lex(expr)
 

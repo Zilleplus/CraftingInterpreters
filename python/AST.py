@@ -31,6 +31,7 @@ class BinaryOperatorType(Enum):
     MINUS = auto()
     PLUS = auto()
     ASTERIX = auto()
+    WEDGE = auto()
     
 class TokenToOperator:
     binary_operator ={

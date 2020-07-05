@@ -34,7 +34,8 @@ def getSpecialChars():
         '*' : TokenType.ASTERIX,
         "'" : TokenType.SINGLE_QUOTE,
         '.' : TokenType.POINT,
-        ',' : TokenType.COMMA
+        ',' : TokenType.COMMA,
+        '^' : TokenType.WEDGE
     }
 
 def Lex(code:str):
