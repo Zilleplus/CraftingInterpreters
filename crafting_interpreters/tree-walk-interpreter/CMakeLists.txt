@@ -4,7 +4,7 @@ project(lox LANGUAGES CXX)
 set(CMAKE_CXX_COMPILER "clang++")
 set(CMAKE_C_COMPILER "clang")
 
-add_library(lox_lib STATIC scanner.cpp tokens.cpp lox.cpp)
+add_library(lox_lib STATIC scanner.cpp tokens.cpp lox.cpp syntaxTree.cpp)
 add_executable(lox main.cpp)
 target_link_libraries(lox PUBLIC lox_lib)
 
