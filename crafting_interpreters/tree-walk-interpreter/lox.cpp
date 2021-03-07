@@ -1,5 +1,6 @@
 #include "lox.h"
 #include "scanner.h"
+#include "parser.h"
 #include <iostream>
 
 namespace lox{
@@ -19,11 +20,12 @@ void Run(const std::string& source)
 {
     Scanner scanner(source);
     auto tokens = scanner.ScanTokens();
+    Parser p(tokens);
+    auto expr = p.Parse();
 
-    for(auto t : tokens)
-    {
-        std::cout << t.ToString()<< std::endl;
-    }
+    if (HadError) {return;}
+
+    print(*expr);
 }
 
 }

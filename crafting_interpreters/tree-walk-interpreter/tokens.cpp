@@ -47,7 +47,7 @@ static std::map<TokenType, std::string> token_to_string {
     { TokenType::EOFL, "EOFL" }
 };
 
-inline std::string ToString(TokenType token_type)
+std::string ToString(TokenType token_type)
 {
     auto token_text = token_to_string.find(token_type);
     if(token_text == token_to_string.end())
@@ -66,10 +66,10 @@ std::string Token::ToString()
                 [](std::string p){return p;},
                 [](std::monostate){return std::string("");}
                 },
-            this->data_);
+            this->Data);
 
-    ss << lox::ToString(this->type_) << " lexeme:";
-    ss << this->lexeme_ << " data:" << data_string;
+    ss << lox::ToString(this->Type) << " lexeme:";
+    ss << this->Lexeme << " data:" << data_string;
 
     return ss.str();
 }

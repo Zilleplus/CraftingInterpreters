@@ -9,7 +9,6 @@
 
 namespace lox {
 
-
 static void runFile(const std::string& path)
 {
     std::ifstream t(path);
