@@ -26,7 +26,6 @@ static std::unordered_map<std::string, TokenType> keywords {
 
 Scanner::Scanner(const std::string& source)
     : source_(source)
-    , tokens_()
 {
 }
 
@@ -55,14 +54,14 @@ char Scanner::Advance()
 char Scanner::Peek() const
 {
   if (IsAtEnd())
-    return '\0';
+  {return '\0';}
   return source_[current_];
 }
 
 char Scanner::PeekNext() const
 {
   if (current_ + 1 >= std::size(source_))
-    return '\0';
+  {return '\0';}
 
   return source_[current_ + 1];
 }
@@ -117,7 +116,7 @@ void Scanner::ScanToken()
   case '/':
     if (Match('/')) { // if this is comment...
       while (Peek() != '\n' && !IsAtEnd())
-        Advance();
+      {Advance();}
     } else {
       AddToken(TokenType::SLASH);
     }
@@ -190,7 +189,7 @@ bool Scanner::Match(char expected)
 
 void Scanner::number()
 {
-  while (std::isdigit(Peek())) {
+  while (std::isdigit(Peek())!=0) {
     Advance();
   }
 

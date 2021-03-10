@@ -10,7 +10,8 @@ add_library(lox_lib STATIC
     tokens.cpp 
     lox.cpp 
     syntaxTree.cpp 
-    parser.cpp)
+    parser.cpp
+    interpreter.cpp)
 add_executable(lox main.cpp)
 target_link_libraries(lox PUBLIC lox_lib)
 

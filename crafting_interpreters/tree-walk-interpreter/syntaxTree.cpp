@@ -39,7 +39,7 @@ public:
             overload {
                 [](const double b) { return std::to_string(b); },
                 [](const std::string& s) { return s; },
-                [](const std::monostate){return std::string("nill");}},
+                [](const std::monostate _){return std::string("nill");}},
             lit.Value);
 
         this->ss_ << "( literal " << text << " )";
