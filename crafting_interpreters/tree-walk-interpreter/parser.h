@@ -4,6 +4,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <optional>
 
 namespace lox {
 
@@ -18,13 +19,19 @@ public:
     {
     }
     
-    std::unique_ptr<Expression> Parse(){
+    std::vector<std::unique_ptr<Statement>> Parse()
+    {
+        std::vector<std::unique_ptr<Statement>> statements;
         try{
-            return Expr();
+            while(!IsAtEnd()){
+                statements.push_back(Decl());
+            }
+
+            return statements;
         }
         catch (ParseError e){
             // no recovery at this moment
-            return nullptr;
+            return {};
         }
     }
 
@@ -34,8 +41,11 @@ private:
     // Consume the current token, and return it.
     Token Advance();
 
-    // Return the next token.
+    // Return the current token.
     Token Peek() const;
+
+    // Return the next token, which might not exist so optional.
+    std::optional<Token> PeekNext() const;
 
     // Return the previous token, aka the last consumed token.
     Token Previous() const;
@@ -79,6 +89,20 @@ private:
     std::unique_ptr<Expression> Unary();
 
     std::unique_ptr<Expression> Primary();
+
+    std::unique_ptr<Expression> Assign();
+
+    std::unique_ptr<Statement> ExprSmt();
+
+    std::unique_ptr<Statement> PrintSmt();
+
+    std::unique_ptr<Statement> Smt();
+
+    std::unique_ptr<Statement> Decl();
+
+    std::unique_ptr<Statement> VarDeclaration();
+
+    std::unique_ptr<Statement> Blck();
 
     Token Consume(TokenType type, std::string&& message)
     {

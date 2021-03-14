@@ -23,7 +23,7 @@ static void runPrompt()
         std::cout << "> ";
         std::string line;
         std::getline(std::cin, line);
-            Run(line, true);
+            Run(line);
     }
 }
 

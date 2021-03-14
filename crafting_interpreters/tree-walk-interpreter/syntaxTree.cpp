@@ -2,6 +2,7 @@
 #include <sstream>
 #include <string>
 #include <iostream>
+#include <variant>
 
 namespace lox {
 
@@ -28,7 +29,13 @@ Grouping::Grouping(std::unique_ptr<Expression>&& e)
 {
 }
 
-class AstSerializer final : public Visitor{
+ExpressionStatement::ExpressionStatement(std::unique_ptr<Expression>&& e)
+    : Expr(std::move(e))
+{
+}
+    
+
+class AstSerializer final : public ExpressionVisitor{
 private:
     std::stringstream ss_;
 
@@ -50,9 +57,9 @@ public:
         ss_ << "(";
         ss_ << ToString(bin.Tok.Type);
         ss_ << " ";
-        Visitor::Visit(*bin.Left);
+        ExpressionVisitor::Visit(*bin.Left);
         ss_ << " ";
-        Visitor::Visit(*bin.Right);
+        ExpressionVisitor::Visit(*bin.Right);
         ss_ << ")";
     }
 
@@ -68,13 +75,29 @@ public:
     virtual void Visit(Grouping& gr) override
     {
         ss_ << "(";
-        Visitor::Visit(*gr.Expr);
+        ExpressionVisitor::Visit(*gr.Expr);
+        ss_ << ")";
+    }
+
+    virtual void Visit(Variable& var) override
+    {
+        ss_ << "(";
+        ss_ << std::get<1>(var.Name.Data); // take the string...
+        ss_ << ")";
+    }
+
+    virtual void Visit(Assignment& var) override
+    {
+        ss_ << "(= ";
+        ss_ << var.Name.Lexeme;
+        ss_ << " ";
+        ExpressionVisitor::Visit(*var.Expr);
         ss_ << ")";
     }
 
     std::string Serialize(Expression& expr)
     {
-        Visitor::Visit(expr);
+        ExpressionVisitor::Visit(expr);
         return ss_.str();
     }
 };
@@ -85,5 +108,25 @@ void print(Expression& expr)
     auto&& text = printer.Serialize(expr);
     std::cout << text << std::endl;
 }
+
+PrintStatement::PrintStatement(std::unique_ptr<Expression>&& expr)
+    : Expr(std::move(expr))
+{}
+
+VariableDeclaration::VariableDeclaration(
+        Token name,
+        std::unique_ptr<Expression>&& initializer) : 
+    Name(std::move(name)), Initializer(std::move(initializer))
+{}
+
+Variable::Variable(Token name)
+    : Name(name)
+{}
+
+Assignment::Assignment(
+        Token name,
+        std::unique_ptr<Expression>&& expr) : 
+    Name(std::move(name)), Expr(std::move(expr))
+{}
 
 }

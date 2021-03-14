@@ -17,11 +17,11 @@ class Scanner {
     int line_ = 1;
 
     bool IsAtEnd() const;
-    bool IsAlpha(char) const;
+    static bool IsAlpha(char);
     void ScanToken();
     char Advance();
     void AddToken(TokenType type);
-    void AddToken(TokenType type, Token::TokenData literal);
+    void AddToken(TokenType type, Token::TokenData data);
     bool Match(char expected);
     char Peek() const;
     char PeekNext() const;

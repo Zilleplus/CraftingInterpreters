@@ -7,7 +7,7 @@
 namespace lox {
 
 template <typename T>
-class FoldVisitor : public Visitor {
+class FoldExpressionVisitor : public ExpressionVisitor {
     std::stack<T> stack_;
     std::function<T(Literal&)> literal_;
     std::function<T(Token, T, T)> bin_expr_;  // op , left, right
@@ -21,12 +21,12 @@ class FoldVisitor : public Visitor {
     }
 
    public:
-    FoldVisitor(std::function<T(Literal&)> literal,
+    FoldExpressionVisitor(std::function<T(Literal&)> literal,
                 std::function<T(Token, T, T)> bin_expr,  // op , left, right
                 std::function<T(Token, T)> un_expr, std::function<T(T)> gr)
         : literal_(literal), bin_expr_(bin_expr), un_expr_(un_expr), gr_(gr) {}
 
-    virtual ~FoldVisitor() override {}
+    virtual ~FoldExpressionVisitor() override {}
 
     virtual void Visit(Literal& l) override {
         try {
@@ -56,7 +56,7 @@ class FoldVisitor : public Visitor {
 
     virtual void Visit(UnaryExpr& u) override {
         try {
-            u.Accept(*this);
+            u.Expr->Accept(*this);
             auto e = stack_.top();
             stack_.pop();
 
@@ -69,7 +69,7 @@ class FoldVisitor : public Visitor {
 
     virtual void Visit(Grouping& g) override {
         try {
-            g.Accept(*this);
+            g.Expr->Accept(*this);
             auto e = stack_.top();
             stack_.pop();
 

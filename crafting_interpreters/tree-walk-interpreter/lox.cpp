@@ -10,9 +10,10 @@ namespace lox {
 
 static bool HadError = false;
 static bool HadRunTimeError = false;
+static Interpreter intp;
 
 void Report(int line, std::string where, std::string message) {
-    std::cerr << "[line " << line << "] Error" << where << ": " << message
+    std::cout << "[line " << line << "] Error" << where << ": " << message
               << std::endl;
     HadError = true;
 }
@@ -20,27 +21,23 @@ void Report(int line, std::string where, std::string message) {
 void Error(int line, std::string message) { Report(line, "", message); }
 
 void ReportRunTimeError(RunTimeError re) {
-    std::cerr << re.ErrorMsg << std::endl
+    std::cout << re.ErrorMsg << std::endl
               << "line[" << re.Operator.Line << "]" << std::endl;
     HadRunTimeError = true;
 }
 
-void Run(const std::string& source, bool debug_mode) {
+void Run(const std::string& source) {
     Scanner scanner(source);
     auto tokens = scanner.ScanTokens();
     Parser p(tokens);
-    auto expr = p.Parse();
+    auto statements = p.Parse();
 
     if (HadError) {
+        HadError=false;
         return;
     }
 
-    Interpreter intp;
-    intp.Interpret(*expr);
-    if(debug_mode)
-    {
-        print(*expr);
-    }
+    intp.Interpret(statements);
 }
 
 }  // namespace lox

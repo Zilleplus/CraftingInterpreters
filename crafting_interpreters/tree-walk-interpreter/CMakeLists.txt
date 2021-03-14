@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(lox LANGUAGES CXX)
-set(CMAKE_CXX_COMPILER "clang++")
-set(CMAKE_C_COMPILER "clang")
-set(CMAKE_CXX_CLANG_TIDY clang-tidy -checks=-*,readability-*)
+#set(CMAKE_CXX_COMPILER "clang++")
+#set(CMAKE_C_COMPILER "clang")
+#set(CMAKE_CXX_CLANG_TIDY clang-tidy -checks=-*,readability-*)
 
 add_library(lox_lib STATIC 
     scanner.cpp 
@@ -11,7 +11,8 @@ add_library(lox_lib STATIC
     lox.cpp 
     syntaxTree.cpp 
     parser.cpp
-    interpreter.cpp)
+    interpreter.cpp
+    environment.cpp)
 add_executable(lox main.cpp)
 target_link_libraries(lox PUBLIC lox_lib)
 
