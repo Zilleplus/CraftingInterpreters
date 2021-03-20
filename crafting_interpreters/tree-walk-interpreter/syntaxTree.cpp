@@ -95,6 +95,17 @@ public:
         ss_ << ")";
     }
 
+    virtual void Visit(Logical& lg) override
+    {
+        ss_ << "(";
+        ss_ << lg.Op.Lexeme;
+        ss_ << " ";
+        ExpressionVisitor::Visit(*lg.Left);
+        ss_ << " ";
+        ExpressionVisitor::Visit(*lg.Right);
+        ss_ << " )";
+    }
+
     std::string Serialize(Expression& expr)
     {
         ExpressionVisitor::Visit(expr);

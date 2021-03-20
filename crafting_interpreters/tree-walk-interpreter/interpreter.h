@@ -27,6 +27,8 @@ class Interpreter : public StatementVisitor,
     static TOut EvalLiteral(Literal& l);
     static TOut EvalBinExpr(Token t, TOut l, TOut r);
     static TOut EvalGroup(TOut v) { return v; }
+    void EvalAnd(Logical& lg);
+    void EvalOr(Logical& lg);
 
    public:
     virtual void Visit(Literal& l) override;
@@ -34,11 +36,14 @@ class Interpreter : public StatementVisitor,
     virtual void Visit(UnaryExpr& u) override;
     virtual void Visit(Grouping& g) override;
     virtual void Visit(Variable& var) override;
-    virtual void Visit(Assignment& ass) override;
+    virtual void Visit(Assignment& ass) override; 
+    virtual void Visit(Logical& lg) override;
 
     virtual void Visit(PrintStatement& p) override;
     virtual void Visit(ExpressionStatement& s) override;
-    virtual void Visit(Block& blk) override;
+    virtual void Visit(Block& blk) override; 
+    virtual void Visit(IfStatement& ifm) override;
+    virtual void Visit(While& whl) override;
 
     virtual void Visit(VariableDeclaration& var) override;
     Interpreter();

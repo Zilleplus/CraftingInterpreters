@@ -4,9 +4,14 @@ namespace lox {
 
 using namespace std::string_literals;
 
+template <typename T>
+bool IsTruth(const T& val) {
+    return std::visit(
+        overload{[](bool b) { return b; }, [](auto _) { return false; }}, val);
+}
+
 Interpreter::Interpreter()
-    : environment_(std::make_unique<Environment<TOut>>())
-{}
+    : environment_(std::make_unique<Environment<TOut>>()) {}
 
 void Interpreter::Visit(Literal& l) { stack_.push(EvalLiteral(l)); }
 
@@ -224,20 +229,61 @@ void Interpreter::Visit(Assignment& ass) {
     stack_.push(val);
 }
 
-void Interpreter::Visit(Block& blk){
+void Interpreter::Visit(Block& blk) {
     environment_ = std::make_unique<Environment<TOut>>(std::move(environment_));
-    try{
-        for(auto& s : blk.Statements)
-        {
+    try {
+        for (auto& s : blk.Statements) {
             Execute(*s);
         }
-    }
-    catch(...)
-    {
+    } catch (...) {
         environment_ = std::move(environment_->enclosing);
         throw;
     }
     environment_ = std::move(environment_->enclosing);
+}
+
+void Interpreter::Visit(IfStatement& ifm) {
+    if (IsTruth(Eval(*ifm.Condition))) {
+        Execute(*ifm.ThenBranch);
+    } else if (ifm.ElseBranch != nullptr) {
+        Execute(*ifm.ElseBranch);
+    }
+}
+
+void Interpreter::EvalOr(Logical& lg) {
+    auto left = Eval(*lg.Left);
+    if (IsTruth(left)) {
+        stack_.push(left);
+        return;
+    }
+    stack_.push(Eval(*lg.Right));
+    return;
+}
+
+void Interpreter::EvalAnd(Logical& lg) {
+    auto left = Eval(*lg.Left);
+    if (IsTruth(left)) {
+        stack_.push(Eval(*lg.Right));
+        return;
+    }
+    stack_.push(left);  // return false;
+}
+
+void Interpreter::Visit(Logical& lg) {
+    if (lg.Op.Type == TokenType::OR) {
+        EvalOr(lg);
+    }
+    if (lg.Op.Type == TokenType::AND) {
+        EvalAnd(lg);
+    }
+}
+
+void Interpreter::Visit(While& whl)
+{
+    while(IsTruth(Eval(*whl.Condition)))
+    {
+        Execute(*whl.Body);
+    }
 }
 
 }  // namespace lox

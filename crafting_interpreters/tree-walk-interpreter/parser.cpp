@@ -38,12 +38,11 @@ Token Parser::Previous() const { return tokens_[current_ - 1]; }
 
 Token Parser::Peek() const { return tokens_[current_]; }
 
-std::optional<Token> Parser::PeekNext() const 
-{ 
+std::optional<Token> Parser::PeekNext() const {
     auto next_current = current_ + 1;
     return (next_current < std::size(tokens_))
-        ? std::optional<Token>(tokens_[next_current])
-        : std::optional<Token>();
+               ? std::optional<Token>(tokens_[next_current])
+               : std::optional<Token>();
 }
 
 bool Parser::IsAtEnd() const { return current_ >= std::size(tokens_) - 1; }
@@ -194,9 +193,17 @@ std::unique_ptr<Statement> Parser::Smt() {
     if (Match({TokenType::PRINT})) {
         return PrintSmt();
     }
-    if(Match({TokenType::LEFT_BRACE}))
-    {
+    if (Match({TokenType::FOR})) {
+        return Fr();
+    }
+    if (Match({TokenType::WHILE})) {
+        return Whl();
+    }
+    if (Match({TokenType::LEFT_BRACE})) {
         return Blck();
+    }
+    if (Match({TokenType::IF})) {
+        return IfSmt();
     }
 
     return ExprSmt();
@@ -229,34 +236,130 @@ std::unique_ptr<Statement> Parser::Decl() {
 }
 
 std::unique_ptr<Expression> Parser::Assign() {
-    std::unique_ptr<Expression> expr = Equality();
-    if(Match({TokenType::EQUAL}))
-    {
+    std::unique_ptr<Expression> expr = Or();
+    if (Match({TokenType::EQUAL})) {
         Token equals = Previous();
         std::unique_ptr<Expression> value = Assign();
 
         Variable* var = dynamic_cast<Variable*>(expr.get());
-        if(var != nullptr)
-        {
+        if (var != nullptr) {
             return std::make_unique<Assignment>(var->Name, std::move(value));
         }
-        
+
         Error(equals, "Invalid assignment target.");
     }
 
     return expr;
-
 }
 
-std::unique_ptr<Statement> Parser::Blck(){
+std::unique_ptr<Statement> Parser::Blck() {
     std::vector<std::unique_ptr<Statement>> statements;
 
-    while(!Check(TokenType::RIGHT_BRACE) && ! IsAtEnd()){
+    while (!Check(TokenType::RIGHT_BRACE) && !IsAtEnd()) {
         statements.push_back(Decl());
     }
 
     Consume(TokenType::RIGHT_BRACE, "Expect '}' after block.");
     return std::make_unique<Block>(std::move(statements));
+}
+
+std::unique_ptr<Statement> Parser::IfSmt() {
+    Consume(TokenType::LEFT_PAREN, "Expect '(' after 'if'.");
+    std::unique_ptr<Expression> condition = Expr();
+    Consume(TokenType::RIGHT_PAREN, "Expect ')' after if condition.");
+
+    std::unique_ptr<Statement> thenBranch = Smt();
+    std::unique_ptr<Statement> elseBranch = nullptr;
+    if (Match({TokenType::ELSE})) {
+        elseBranch = Smt();
+    }
+
+    return std::make_unique<IfStatement>(
+        std::move(condition), std::move(thenBranch), std::move(elseBranch));
+}
+
+std::unique_ptr<Expression> Parser::And() {
+    std::unique_ptr<Expression> expr = Equality();
+
+    while (Match({TokenType::AND})) {
+        Token op = Previous();
+        std::unique_ptr<Expression> right = Equality();
+        expr = std::make_unique<Logical>(op, std::move(expr), std::move(right));
+    }
+
+    return expr;
+}
+
+std::unique_ptr<Expression> Parser::Or() {
+    std::unique_ptr<Expression> expr = And();
+
+    while (Match({TokenType::OR})) {
+        Token op = Previous();
+        std::unique_ptr<Expression> right = Equality();
+        expr = std::make_unique<Logical>(op, std::move(expr), std::move(right));
+    }
+
+    return expr;
+}
+
+std::unique_ptr<Statement> Parser::Whl() {
+    Consume(TokenType::LEFT_PAREN, "Expect '(' after 'while'.");
+    std::unique_ptr<Expression> condition = Expr();
+    Consume(TokenType::RIGHT_PAREN, "Expect ')' after 'while'.");
+    std::unique_ptr<Statement> body = Smt();
+
+    return std::make_unique<While>(std::move(condition), std::move(body));
+}
+
+std::unique_ptr<Statement> Parser::Fr() {
+    Consume(TokenType::LEFT_PAREN, "Expect '(' after 'for'.");
+
+    std::unique_ptr<Statement> initializer;
+    if (Match({TokenType::SEMICOLON})) {
+        initializer = nullptr;
+    } else if (Match({TokenType::VAR})) {
+        initializer = VarDeclaration();
+    } else {
+        initializer = ExprSmt();
+    }
+
+    std::unique_ptr<Expression> condition;
+    if (!Check(TokenType::SEMICOLON)) {
+        condition = Expr();
+    }
+    Consume(TokenType::SEMICOLON, "Expect ';' after loop condition");
+
+    std::unique_ptr<Expression> increment;
+    if (!Check(TokenType::SEMICOLON)) {
+        increment = Expr();
+    }
+    Match({TokenType::SEMICOLON}); // remove the optional ;
+    Consume(TokenType::RIGHT_PAREN, "Expect ')' after 'for'.");
+
+    std::unique_ptr<Block> body = std::make_unique<Block>();
+    if (increment != nullptr)
+
+    {
+        body->Statements.push_back(Smt());
+        body->Statements.push_back(std::make_unique<ExpressionStatement>(std::move(increment)));
+    }
+
+    if (condition == nullptr) {
+        condition = std::make_unique<Literal>(true);
+    }
+
+    std::unique_ptr<Statement> loop =
+        std::make_unique<While>(std::move(condition), std::move(body));
+
+    if(initializer!=nullptr)
+    {
+        std::unique_ptr<Block> loop_with_init =  std::make_unique<Block>();
+        loop_with_init->Statements.push_back(std::move(initializer));
+        loop_with_init->Statements.push_back(std::move(loop));
+        return loop_with_init;
+    }
+
+    return loop;
 }
 
 }  // namespace lox

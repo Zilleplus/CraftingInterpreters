@@ -92,6 +92,10 @@ private:
 
     std::unique_ptr<Expression> Assign();
 
+    std::unique_ptr<Expression> And();
+
+    std::unique_ptr<Expression> Or();
+
     std::unique_ptr<Statement> ExprSmt();
 
     std::unique_ptr<Statement> PrintSmt();
@@ -103,6 +107,12 @@ private:
     std::unique_ptr<Statement> VarDeclaration();
 
     std::unique_ptr<Statement> Blck();
+
+    std::unique_ptr<Statement> IfSmt();
+
+    std::unique_ptr<Statement> Whl();
+
+    std::unique_ptr<Statement> Fr();
 
     Token Consume(TokenType type, std::string&& message)
     {

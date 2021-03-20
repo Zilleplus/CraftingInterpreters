@@ -18,16 +18,18 @@ class UnaryExpr;
 class Grouping;
 class Variable;
 class Assignment;
+class Logical;
 
 class Statement;
 class StatementVisitor;
 class ExpressionStatement;
 class PrintStatement;
 class Block;
-
+class IfStatement;
 class Declaration;
 class DeclarationVisitor;
 class VariableDeclaration;
+class While;
 
 class Expression {
    public:
@@ -51,6 +53,7 @@ class ExpressionVisitor {
     virtual void Visit(Grouping&) = 0;
     virtual void Visit(Variable&) = 0;
     virtual void Visit(Assignment&) = 0;
+    virtual void Visit(Logical&) = 0;
 };
 
 struct StatementVisitor {
@@ -60,6 +63,8 @@ struct StatementVisitor {
     virtual void Visit(ExpressionStatement&) = 0;
     virtual void Visit(VariableDeclaration& vdecl) = 0;
     virtual void Visit(Block& blk) = 0;
+    virtual void Visit(IfStatement& ifm) = 0;
+    virtual void Visit(While& whl) = 0;
 };
 
 class BinaryExpr final : public Expression {
@@ -132,6 +137,24 @@ class VariableDeclaration final : public Statement {
     virtual void Accept(StatementVisitor& vis) override { vis.Visit(*this); }
 };
 
+class IfStatement final : public Statement{
+    public:
+    std::unique_ptr<Expression> Condition;
+    std::unique_ptr<Statement> ThenBranch;
+    std::unique_ptr<Statement> ElseBranch;
+    IfStatement(
+        std::unique_ptr<Expression>&& condition,
+        std::unique_ptr<Statement>&& thenBranch,
+        std::unique_ptr<Statement>&& elseBranch
+        )
+        :   Condition(std::move(condition)),
+            ThenBranch(std::move(thenBranch)),
+            ElseBranch(std::move(elseBranch))
+    {}
+
+    virtual void Accept(StatementVisitor& vis) override { vis.Visit(*this); }
+};
+
 class Assignment final : public Expression{
     public:
     std::unique_ptr<Expression> Expr;
@@ -145,9 +168,39 @@ class Block final : public Statement{
     public:
     std::vector<std::unique_ptr<Statement>> Statements;
     Block(std::vector<std::unique_ptr<Statement>>&& statements)
-        : Statements(std::move(statements))
-    {
-    }
+        : Statements(std::move(statements)){}
+    Block() = default;
+
+
+    virtual void Accept(StatementVisitor& vis) override { vis.Visit(*this); }
+};
+
+class Logical final : public Expression{
+    public:
+        Token Op;
+        std::unique_ptr<Expression> Left;
+        std::unique_ptr<Expression> Right;
+        
+        Logical(Token op, 
+            std::unique_ptr<Expression> left,
+            std::unique_ptr<Expression> right) :
+            Op(op), 
+            Left(std::move(left)),
+            Right(std::move(right)){}
+
+    virtual void Accept(ExpressionVisitor& vis) override { vis.Visit(*this); }
+};
+
+class While final : public Statement{
+   public:
+      std::unique_ptr<Expression> Condition;
+      std::unique_ptr<Statement> Body;
+
+      While(
+         std::unique_ptr<Expression>&& condition,
+         std::unique_ptr<Statement>&& body)
+         : Condition(std::move(condition)),
+         Body(std::move(body)){}
 
     virtual void Accept(StatementVisitor& vis) override { vis.Visit(*this); }
 };
