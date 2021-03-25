@@ -1,5 +1,10 @@
 #include "interpreter.h"
 
+#include <string>
+
+#include "loxFunction.h"
+#include "return.h"
+
 namespace lox {
 
 using namespace std::string_literals;
@@ -9,9 +14,6 @@ bool IsTruth(const T& val) {
     return std::visit(
         overload{[](bool b) { return b; }, [](auto _) { return false; }}, val);
 }
-
-Interpreter::Interpreter()
-    : environment_(std::make_unique<Environment<TOut>>()) {}
 
 void Interpreter::Visit(Literal& l) { stack_.push(EvalLiteral(l)); }
 
@@ -185,6 +187,10 @@ TOut Interpreter::EvalBinExpr(Token t, TOut l, TOut r) {
                             return {"Nil"};
                         }},
                     r);
+            },
+            [&t](LoxFunction& l) -> TOut {
+                RError(t, "Unexpected callable");
+                return {"Nil"};
             }},
         l);
 }
@@ -196,14 +202,16 @@ void Interpreter::Visit(Variable& var) {
 void Interpreter::Visit(VariableDeclaration& var) {
     TOut value;
     if (var.Initializer != nullptr) {
-        value = Eval(*var.Initializer);
+        value = Eval(*(var.Initializer));
     }
     environment_->Define(var.Name.Lexeme, value);
 }
 
 void Interpreter::Visit(PrintStatement& p) {
     auto val = Eval(*p.Expr);
-    std::visit(overload{[](auto v) { std::cout << v << std::endl; }}, val);
+    std::visit(overload{[](LoxFunction& c) {},
+                        [](auto v) { std::cout << v << std::endl; }},
+               val);
 }
 
 void Interpreter::Visit(ExpressionStatement& s) { auto val = Eval(*s.Expr); }
@@ -229,17 +237,25 @@ void Interpreter::Visit(Assignment& ass) {
     stack_.push(val);
 }
 
-void Interpreter::Visit(Block& blk) {
-    environment_ = std::make_unique<Environment<TOut>>(std::move(environment_));
+void Interpreter::ExecuteBlock(
+    std::vector<std::shared_ptr<Statement>>& statements,
+    std::shared_ptr<Environment<TOut>>& env) {
+    auto old_env = environment_;
+    environment_ = env;  // Assign the pointer.
     try {
-        for (auto& s : blk.Statements) {
+        for (auto& s : statements) {
             Execute(*s);
         }
     } catch (...) {
-        environment_ = std::move(environment_->enclosing);
+        environment_ = old_env;  // reset the pointer on failure.
         throw;
     }
-    environment_ = std::move(environment_->enclosing);
+    environment_ = old_env;
+}
+
+void Interpreter::Visit(Block& blk) {
+    auto env = std::make_shared<Environment<TOut>>(environment_);
+    ExecuteBlock(blk.Statements, env);
 }
 
 void Interpreter::Visit(IfStatement& ifm) {
@@ -278,12 +294,49 @@ void Interpreter::Visit(Logical& lg) {
     }
 }
 
-void Interpreter::Visit(While& whl)
-{
-    while(IsTruth(Eval(*whl.Condition)))
-    {
+void Interpreter::Visit(While& whl) {
+    while (IsTruth(Eval(*whl.Condition))) {
         Execute(*whl.Body);
     }
+}
+
+void Interpreter::Visit(Call& c) {
+    auto callee = Eval(*c.Callee);
+
+    std::vector<TOut> arguments;
+    for (auto& arg : c.Arguments) {
+        arguments.push_back(Eval(*arg));
+    }
+
+    stack_.push(std::visit(
+        overload{[&](LoxFunction& lf) -> TOut {
+                     if (std::size(arguments) != lf.Arity()) {
+                         std::string error_message =
+                             "Expected"s + std::to_string(lf.Arity()) +
+                             " arguments but got "s +
+                             std::to_string(std::size(arguments)) + "."s;
+
+                         throw RunTimeError{c.Paren, std::move(error_message)};
+                     }
+                     return lf.Call(*this, arguments);
+                 },
+                 [&c](auto _) -> TOut {
+                     throw RunTimeError{c.Paren,
+                                        "Can only call functions and classes"};
+                     return TOut{"Nil"};
+                 }},
+        callee));
+}
+
+void Interpreter::Visit(FunctionDeclaration& fd) {
+    environment_->Define(fd.Name.Lexeme, {LoxFunction(fd, environment_)});
+}
+
+void Interpreter::Visit(ReturnStatement& rstm){
+    TOut value;
+    if(rstm.Value!=nullptr){value = Eval(*rstm.Value);}
+
+    throw Return(value);
 }
 
 }  // namespace lox

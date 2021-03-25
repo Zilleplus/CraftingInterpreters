@@ -106,6 +106,17 @@ public:
         ss_ << " )";
     }
 
+    virtual void Visit(Call& call) override
+    {
+        ss_ << "(Call ";
+        ExpressionVisitor::Visit(*call.Callee);
+        for(auto& a : call.Arguments)
+        {
+            ExpressionVisitor::Visit(*a);
+        }
+        ss_ << ")";
+    }
+
     std::string Serialize(Expression& expr)
     {
         ExpressionVisitor::Visit(expr);

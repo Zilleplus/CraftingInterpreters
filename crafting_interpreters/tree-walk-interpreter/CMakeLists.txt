@@ -12,7 +12,8 @@ add_library(lox_lib STATIC
     syntaxTree.cpp 
     parser.cpp
     interpreter.cpp
-    environment.cpp)
+    environment.cpp
+    loxFunction.cpp)
 add_executable(lox main.cpp)
 target_link_libraries(lox PUBLIC lox_lib)
 

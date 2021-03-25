@@ -62,17 +62,17 @@ public:
         std::string,
         double>;
 
-    const TokenType Type;
-    const std::string Lexeme;
-    const TokenData Data;
-    const int Line;
+    TokenType Type;
+    std::string Lexeme;
+    TokenData Data;
+    int Line;
 
 public:
     Token(
-        const TokenType type,
-        const std::string& lexeme,
-        const TokenData data,
-        const int line)
+        TokenType type,
+        std::string lexeme,
+        TokenData data,
+        int line)
         : Type(type)
         , Lexeme(lexeme)
         , Data(std::move(data))

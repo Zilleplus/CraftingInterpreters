@@ -13,14 +13,14 @@ template <typename TOut>
 class Environment {
    public:
     using ValueType = TOut;
-    std::unique_ptr<Environment<ValueType>> enclosing = nullptr;
+    std::shared_ptr<Environment<ValueType>> enclosing = nullptr;
+    std::map<std::string, ValueType> values;
 
    private:
-    std::map<std::string, ValueType> values;
 
    public:
     Environment();
-    Environment(std::unique_ptr<Environment<ValueType>>&& env);
+    Environment(std::shared_ptr<Environment<ValueType>> env);
 
     void Define(const std::string& name,
                 typename Environment<TOut>::ValueType value);
@@ -32,13 +32,13 @@ template <typename T>
 Environment<T>::Environment() {}
 
 template <typename T>
-Environment<T>::Environment(std::unique_ptr<Environment<T>>&& env)
+Environment<T>::Environment(std::shared_ptr<Environment<T>> env)
     : enclosing(std::move(env)) {}
 
 template <typename T>
 void Environment<T>::Define(const std::string& name,
                             typename Environment<T>::ValueType value) {
-    this->values.insert_or_assign(name, value);
+    values.insert_or_assign(name, value);
 }
 
 template <typename T>

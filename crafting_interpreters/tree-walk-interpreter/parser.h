@@ -1,42 +1,38 @@
+#include <memory>
+#include <optional>
+#include <string>
+#include <vector>
+
+#include "lox.h"
 #include "syntaxTree.h"
 #include "tokens.h"
-#include "lox.h"
-#include <memory>
-#include <vector>
-#include <string>
-#include <optional>
 
 namespace lox {
 
 class Parser {
-private:
+   private:
     const std::vector<Token>& tokens_;
     int current_ = 0;
 
-public:
-    Parser(std::vector<Token>& tokens)
-        : tokens_(tokens)
-    {
-    }
-    
-    std::vector<std::unique_ptr<Statement>> Parse()
-    {
+   public:
+    Parser(std::vector<Token>& tokens) : tokens_(tokens) {}
+
+    std::vector<std::unique_ptr<Statement>> Parse() {
         std::vector<std::unique_ptr<Statement>> statements;
-        try{
-            while(!IsAtEnd()){
+        try {
+            while (!IsAtEnd()) {
                 statements.push_back(Decl());
             }
 
             return statements;
-        }
-        catch (ParseError e){
+        } catch (ParseError e) {
             // no recovery at this moment
             return {};
         }
     }
 
-private:
-    struct ParseError{}; 
+   private:
+    struct ParseError {};
 
     // Consume the current token, and return it.
     Token Advance();
@@ -56,13 +52,10 @@ private:
     // Check if their are more token to be consumed.
     bool IsAtEnd() const;
 
-    static void ReportError(Token token, std::string&& message)
-    {
-        if(token.Type == TokenType::EOFL)
-        {
+    static void ReportError(Token token, std::string&& message) {
+        if (token.Type == TokenType::EOFL) {
             Report(token.Line, " at end", std::move(message));
-        }
-        else{
+        } else {
             std::string err_msg = " at ";
             err_msg.append(token.Lexeme);
 
@@ -70,8 +63,7 @@ private:
         }
     }
 
-    ParseError Error(Token token, std::string&& message)
-    {
+    ParseError Error(Token token, std::string&& message) {
         ReportError(token, std::move(message));
         return ParseError();
     }
@@ -96,6 +88,10 @@ private:
 
     std::unique_ptr<Expression> Or();
 
+    std::unique_ptr<Expression> Cll();
+
+    std::unique_ptr<Expression> FinishCall(std::unique_ptr<Expression>&&);
+
     std::unique_ptr<Statement> ExprSmt();
 
     std::unique_ptr<Statement> PrintSmt();
@@ -106,7 +102,7 @@ private:
 
     std::unique_ptr<Statement> VarDeclaration();
 
-    std::unique_ptr<Statement> Blck();
+    std::unique_ptr<Block> Blck();
 
     std::unique_ptr<Statement> IfSmt();
 
@@ -114,10 +110,12 @@ private:
 
     std::unique_ptr<Statement> Fr();
 
-    Token Consume(TokenType type, std::string&& message)
-    {
-        if(Check(type)) 
-        {
+    std::unique_ptr<Statement> FunDecl(std::string&&);
+
+    std::unique_ptr<Statement> Rtrn();
+
+    Token Consume(TokenType type, std::string&& message) {
+        if (Check(type)) {
             return Advance();
         }
 
@@ -125,11 +123,11 @@ private:
     }
 
     // Check if the next token equals one of the provided token types.
-    // If it matches it returns true, and consume the token. Otherwise 
+    // If it matches it returns true, and consume the token. Otherwise
     // return false.
     bool Match(std::initializer_list<TokenType> tokens);
-    
+
     void Synchronize();
 };
 
-}
+}  // namespace lox

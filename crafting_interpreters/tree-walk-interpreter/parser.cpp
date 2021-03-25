@@ -109,7 +109,7 @@ std::unique_ptr<Expression> Parser::Unary() {
         return std::make_unique<UnaryExpr>(Unary(), Previous());
     }
 
-    return Primary();
+    return Cll();
 }
 
 std::unique_ptr<Expression> Parser::Primary() {
@@ -205,6 +205,9 @@ std::unique_ptr<Statement> Parser::Smt() {
     if (Match({TokenType::IF})) {
         return IfSmt();
     }
+    if (Match({TokenType::RETURN})) {
+        return Rtrn();
+    }
 
     return ExprSmt();
 }
@@ -224,6 +227,9 @@ std::unique_ptr<Statement> Parser::VarDeclaration() {
 
 std::unique_ptr<Statement> Parser::Decl() {
     try {
+        if (Match({TokenType::FUN})) {
+            return FunDecl("function");
+        }
         if (Match({TokenType::VAR})) {
             return VarDeclaration();
         }
@@ -252,8 +258,8 @@ std::unique_ptr<Expression> Parser::Assign() {
     return expr;
 }
 
-std::unique_ptr<Statement> Parser::Blck() {
-    std::vector<std::unique_ptr<Statement>> statements;
+std::unique_ptr<Block> Parser::Blck() {
+    std::vector<std::shared_ptr<Statement>> statements;
 
     while (!Check(TokenType::RIGHT_BRACE) && !IsAtEnd()) {
         statements.push_back(Decl());
@@ -333,7 +339,7 @@ std::unique_ptr<Statement> Parser::Fr() {
     if (!Check(TokenType::SEMICOLON)) {
         increment = Expr();
     }
-    Match({TokenType::SEMICOLON}); // remove the optional ;
+    Match({TokenType::SEMICOLON});  // remove the optional ;
     Consume(TokenType::RIGHT_PAREN, "Expect ')' after 'for'.");
 
     std::unique_ptr<Block> body = std::make_unique<Block>();
@@ -341,7 +347,8 @@ std::unique_ptr<Statement> Parser::Fr() {
 
     {
         body->Statements.push_back(Smt());
-        body->Statements.push_back(std::make_unique<ExpressionStatement>(std::move(increment)));
+        body->Statements.push_back(
+            std::make_unique<ExpressionStatement>(std::move(increment)));
     }
 
     if (condition == nullptr) {
@@ -351,15 +358,85 @@ std::unique_ptr<Statement> Parser::Fr() {
     std::unique_ptr<Statement> loop =
         std::make_unique<While>(std::move(condition), std::move(body));
 
-    if(initializer!=nullptr)
-    {
-        std::unique_ptr<Block> loop_with_init =  std::make_unique<Block>();
+    if (initializer != nullptr) {
+        std::unique_ptr<Block> loop_with_init = std::make_unique<Block>();
         loop_with_init->Statements.push_back(std::move(initializer));
         loop_with_init->Statements.push_back(std::move(loop));
         return loop_with_init;
     }
 
     return loop;
+}
+
+std::unique_ptr<Expression> Parser::Cll() {
+    std::unique_ptr<Expression> expression = Primary();
+
+    while (true) {
+        if (Match({TokenType::LEFT_PAREN})) {
+            expression = FinishCall(std::move(expression));
+        } else {
+            break;
+        }
+    }
+
+    return std::move(expression);
+}
+
+std::unique_ptr<Expression> Parser::FinishCall(
+    std::unique_ptr<Expression>&& callee) {
+    // Take all available the arguments (might be no arguments, one or many
+    // arguments).
+    Token op = Previous();
+    std::vector<std::unique_ptr<Expression>> arguments;
+    if (!Check(TokenType::RIGHT_PAREN)) {
+        do {
+            if (std::size(arguments) >= 255) {
+                Error(Peek(), "Can't have more then 255 arguments");
+            }
+            arguments.push_back(Expr());
+        } while (Match({TokenType::COMMA}));
+    }
+    Consume(TokenType::RIGHT_PAREN, "Expect ')' after parameters.");
+
+    return std::make_unique<Call>(std::move(callee), op, std::move(arguments));
+}
+
+std::unique_ptr<Statement> Parser::FunDecl(std::string&& kind) {
+    Token name = Consume(TokenType::IDENTIFIER,
+                         std::string("Expect ") + kind + std::string(" name."));
+    Consume(TokenType::LEFT_PAREN,
+            std::string("Expect '(' after ") + kind + std::string(" name."));
+    std::vector<Token> parameters;
+    if (!Check(TokenType::RIGHT_PAREN)) {
+        do {
+            if (std::size(parameters) >= 255) {
+                Error(Peek(), "Can't have more than 255 parameters");
+            }
+
+            parameters.push_back(
+                Consume(TokenType::IDENTIFIER, "Expect parameter name."));
+        } while (Match({TokenType::COMMA}));
+    }
+    Consume(TokenType::RIGHT_PAREN, "Expect ')' after parameters.");
+
+    Consume(TokenType::LEFT_BRACE, "Expecte '{' before " + kind + " body.");
+    auto blk = Blck();
+
+    return std::make_unique<FunctionDeclaration>(name, std::move(parameters),
+                                                 std::move(blk->Statements));
+}
+
+std::unique_ptr<Statement> Parser::Rtrn()
+{
+    Token keyword = Previous();
+    std::unique_ptr<Expression> value = nullptr;
+
+    if(!Check(TokenType::SEMICOLON)){
+        value = Expr();
+    }
+
+    Consume(TokenType::SEMICOLON, "Expect ';' after return value.");
+    return std::make_unique<ReturnStatement>(std::move(value));
 }
 
 }  // namespace lox
