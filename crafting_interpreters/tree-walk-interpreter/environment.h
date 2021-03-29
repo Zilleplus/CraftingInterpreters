@@ -25,7 +25,10 @@ class Environment {
     void Define(const std::string& name,
                 typename Environment<TOut>::ValueType value);
     void Assign(const Token& name, typename Environment<TOut>::ValueType value);
+    void AssignAt(int distance, const Token& name, typename Environment<TOut>::ValueType value);
     ValueType Get(Token name);
+    ValueType GetAt(int distance, Token name);
+    Environment<TOut>* Ancestor(int distance);
 };
 
 template <typename T>
@@ -76,6 +79,33 @@ typename Environment<T>::ValueType Environment<T>::Get(Token name) {
     }
 
     return val->second;
+}
+
+template<typename T>
+Environment<T>* Environment<T>::Ancestor(int distance)
+{
+    auto env = this;
+    for(int i = 0; i < distance; ++i)
+    {
+        env = env->enclosing.get();
+    }
+
+    return env;
+}
+
+template<typename T>
+typename Environment<T>::ValueType Environment<T>::GetAt(int distance, Token name)
+{
+    return Ancestor(distance)->values.find(name.Lexeme)->second;
+}
+
+template<typename T>
+void Environment<T>::AssignAt(
+        int distance,
+        const Token& name,
+        typename Environment<T>::ValueType value)
+{
+    Ancestor(distance)->values.insert_or_assign(name.Lexeme, value);
 }
 
 }  // namespace lox

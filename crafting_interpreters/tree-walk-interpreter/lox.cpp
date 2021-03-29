@@ -5,6 +5,7 @@
 #include "interpreter.h"
 #include "parser.h"
 #include "scanner.h"
+#include "resolver.h"
 
 namespace lox {
 
@@ -36,6 +37,9 @@ void Run(const std::string& source) {
         HadError=false;
         return;
     }
+
+    Resolver resolver(intp);
+    resolver.Resolve(statements);
 
     intp.Interpret(statements);
 }

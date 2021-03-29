@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <variant>
+#include <map>
 
 #include "environment.h"
 #include "foldVisitor.h"
@@ -19,15 +20,20 @@ class Interpreter : public StatementVisitor, public ExpressionVisitor {
    public:
     using TOut = std::variant<bool, double, std::string, LoxFunction>;
     std::stack<TOut> stack_;
-    std::shared_ptr<Environment<TOut>> Globals = std::make_shared<Environment<TOut>>();
+    std::shared_ptr<Environment<TOut>> Globals =
+        std::make_shared<Environment<TOut>>();
+    std::map<Expression*, int> locals;
+
    private:
-    std::shared_ptr<Environment<TOut>> environment_ = Globals; // By default use global scope.
+    std::shared_ptr<Environment<TOut>> environment_ =
+        Globals;  // By default use global scope.
     static TOut EvalUnExpr(Token t, TOut v);
     static TOut EvalLiteral(Literal& l);
     static TOut EvalBinExpr(Token t, TOut l, TOut r);
     static TOut EvalGroup(TOut v) { return v; }
     void EvalAnd(Logical& lg);
     void EvalOr(Logical& lg);
+    TOut LookUpVariable(Token name, Variable* expr);
 
    public:
     virtual void Visit(Literal& l) override;
@@ -56,6 +62,8 @@ class Interpreter : public StatementVisitor, public ExpressionVisitor {
         stack_.pop();
         return answer;
     }
+
+    void Resolve(Expression* expr, int depth);
 
     void Execute(Statement& s) { s.Accept(*this); }
     void Interpret(std::vector<std::unique_ptr<Statement>>& statements);

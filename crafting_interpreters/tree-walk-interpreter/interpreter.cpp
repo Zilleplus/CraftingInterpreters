@@ -196,7 +196,7 @@ TOut Interpreter::EvalBinExpr(Token t, TOut l, TOut r) {
 }
 
 void Interpreter::Visit(Variable& var) {
-    stack_.push(environment_->Get(var.Name));
+    stack_.push(LookUpVariable(var.Name, &var));
 }
 
 void Interpreter::Visit(VariableDeclaration& var) {
@@ -233,7 +233,12 @@ void Interpreter::Interpret(
 
 void Interpreter::Visit(Assignment& ass) {
     auto val = Eval(*ass.Expr);
-    environment_->Assign(ass.Name, val);
+    auto distance = locals.find(&ass);
+    if (distance != locals.end()) {
+        environment_->AssignAt(distance->second, ass.Name, val);
+    } else {
+        Globals->Assign(ass.Name, val);
+    }
     stack_.push(val);
 }
 
@@ -332,11 +337,25 @@ void Interpreter::Visit(FunctionDeclaration& fd) {
     environment_->Define(fd.Name.Lexeme, {LoxFunction(fd, environment_)});
 }
 
-void Interpreter::Visit(ReturnStatement& rstm){
+void Interpreter::Visit(ReturnStatement& rstm) {
     TOut value;
-    if(rstm.Value!=nullptr){value = Eval(*rstm.Value);}
+    if (rstm.Value != nullptr) {
+        value = Eval(*rstm.Value);
+    }
 
     throw Return(value);
+}
+
+void Interpreter::Resolve(Expression* expr, int depth) {
+    locals.insert({expr, depth});
+}
+
+TOut Interpreter::LookUpVariable(Token name, Variable* expr) {
+    auto distance = locals.find(expr);
+    if (distance != locals.end()) {
+        return environment_->GetAt(distance->second, name);
+    }
+    return Globals->Get(name);
 }
 
 }  // namespace lox

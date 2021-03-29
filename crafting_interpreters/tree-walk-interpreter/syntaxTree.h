@@ -60,7 +60,8 @@ class ExpressionVisitor {
     virtual void Visit(Call&) = 0;
 };
 
-struct StatementVisitor {
+class StatementVisitor {
+   public:
     virtual void Visit(Statement& expr) { expr.Accept(*this); }
     virtual ~StatementVisitor() = default;
     virtual void Visit(PrintStatement&) = 0;
@@ -230,11 +231,11 @@ class FunctionDeclaration final : public Statement {
     virtual void Accept(StatementVisitor& vis) override { vis.Visit(*this); }
 };
 
-class ReturnStatement final : public Statement{
+class ReturnStatement final : public Statement {
    public:
-      std::unique_ptr<Expression> Value;
-      ReturnStatement(std::unique_ptr<Expression>&& value)
-      : Value(std::move(value)){}
+    std::unique_ptr<Expression> Value;
+    ReturnStatement(std::unique_ptr<Expression>&& value)
+        : Value(std::move(value)) {}
 
     virtual void Accept(StatementVisitor& vis) override { vis.Visit(*this); }
 };
